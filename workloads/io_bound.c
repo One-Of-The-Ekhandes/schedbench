@@ -1,0 +1,40 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <time.h>
+
+#if defined(_WIN32)
+#include <windows.h>
+static void sleep_ms(int ms) { Sleep(ms); }
+#else
+#include <unistd.h>
+static void sleep_ms(int ms) { usleep((useconds_t)ms * 1000); }
+#endif
+
+static inline uint64_t now_ns(void) {
+#if defined(CLOCK_MONOTONIC)
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_nsec;
+#else
+    return (uint64_t)clock() * (1000000000ULL / CLOCKS_PER_SEC);
+#endif
+}
+
+int main(int argc, char **argv) {
+    int ms_sleep = 10;
+    int reps = 200;
+    if (argc > 1) sscanf(argv[1], "%d", &ms_sleep);
+    if (argc > 2) sscanf(argv[2], "%d", &reps);
+    if (ms_sleep < 1) ms_sleep = 1;
+    if (reps < 1) reps = 1;
+
+    uint64_t t0 = now_ns();
+    for (int i = 0; i < reps; i++) {
+        sleep_ms(ms_sleep);
+    }
+    uint64_t t1 = now_ns();
+
+    double ms = (double)(t1 - t0) / 1e6;
+    printf("io_bound_ms=%.3f\n", ms);
+    return 0;
+}
