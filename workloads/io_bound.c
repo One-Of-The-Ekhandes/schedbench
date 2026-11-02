@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
+#include <errno.h>
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -10,7 +11,7 @@ static void sleep_ms(int ms) { Sleep(ms); }
 /* nanosleep is the POSIX replacement for usleep, which was removed in POSIX.1-2008. */
 static void sleep_ms(int ms) {
     struct timespec req = { ms / 1000, (long)(ms % 1000) * 1000000L };
-    while (nanosleep(&req, &req) != 0) { /* resume if interrupted by a signal */ }
+    while (nanosleep(&req, &req) == -1 && errno == EINTR) { /* resume if interrupted by a signal */ }
 }
 #endif
 
