@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L /* expose clock_gettime, CLOCK_MONOTONIC and usleep under -std=c11 */
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
