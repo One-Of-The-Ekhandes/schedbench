@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Build with warnings as errors
+        run: make CFLAGS="-O2 -Wall -Wextra -std=c11 -Werror"
+      - name: Run workloads
+        run: ./run.sh 3
+      - name: Analyse
+        run: python3 analyze.py
+      - name: io_bound measures wall-clock time (about 2,000 ms, not CPU time)
+        run: |
+          ms=$(./workloads/io_bound | cut -d= -f2)
+          echo "io_bound_ms=$ms"
+          python3 -c "import sys; v=float('$ms'); sys.exit(0 if 1900 <= v <= 4000 else 1)"
