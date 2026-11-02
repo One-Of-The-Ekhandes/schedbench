@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 200809L /* expose clock_gettime, CLOCK_MONOTONIC and usleep under -std=c11 */
+#define _POSIX_C_SOURCE 200809L /* expose clock_gettime, CLOCK_MONOTONIC and nanosleep under -std=c11 */
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
@@ -7,8 +7,11 @@
 #include <windows.h>
 static void sleep_ms(int ms) { Sleep(ms); }
 #else
-#include <unistd.h>
-static void sleep_ms(int ms) { usleep((useconds_t)ms * 1000); }
+/* nanosleep is the POSIX replacement for usleep, which was removed in POSIX.1-2008. */
+static void sleep_ms(int ms) {
+    struct timespec req = { ms / 1000, (long)(ms % 1000) * 1000000L };
+    while (nanosleep(&req, &req) != 0) { /* resume if interrupted by a signal */ }
+}
 #endif
 
 static inline uint64_t now_ns(void) {
